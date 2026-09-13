@@ -1,20 +1,23 @@
 import { spawnSync } from 'node:child_process'
-import { existsSync, unlinkSync } from 'node:fs'
+import {
+  existsSync,
+  openSync,
+  closeSync,
+  unlinkSync,
+} from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-const HOST = 'losvps'
-const REMOTE_ARCHIVE = '/tmp/botslate-site.tar.gz'
-const REMOTE_SITE = '/var/www/botslate/site'
-
+const HOST = 'los-deploy'
 const archive = join(tmpdir(), 'botslate-site.tar.gz')
 
-function run(command, args) {
+function run(command, args, options = {}) {
   console.log(`\n> ${command} ${args.join(' ')}`)
 
   const result = spawnSync(command, args, {
     stdio: 'inherit',
     shell: false,
+    ...options,
   })
 
   if (result.status !== 0) {
@@ -22,13 +25,13 @@ function run(command, args) {
   }
 }
 
-if (!existsSync('dist')) {
-  console.error('dist directory does not exist.')
+if (!existsSync('dist/index.html')) {
+  console.error('dist/index.html does not exist. Build the site first.')
   process.exit(1)
 }
 
 try {
-  // 将 Astro 构建产物打包
+  // 打包 Astro 静态产物
   run('tar', [
     '-czf',
     archive,
@@ -37,44 +40,26 @@ try {
     '.',
   ])
 
-  // 上传到 VPS
-  run('scp', [
-    archive,
-    `${HOST}:${REMOTE_ARCHIVE}`,
-  ])
+  // 将压缩包直接通过 SSH stdin 发送给服务器。
+  // 服务器端 ForceCommand 会自动执行 deploy-botslate。
+  console.log(`\n> deploying to ${HOST}`)
 
-  // 在服务器上解压并替换当前网站
-  const remoteCommand = `
-set -e
+  const fd = openSync(archive, 'r')
 
-LIVE="${REMOTE_SITE}"
-NEW="${REMOTE_SITE}.new"
-OLD="${REMOTE_SITE}.old"
-ARCHIVE="${REMOTE_ARCHIVE}"
+  const result = spawnSync(
+    'ssh',
+    ['-T', HOST],
+    {
+      stdio: [fd, 'inherit', 'inherit'],
+      shell: false,
+    },
+  )
 
-rm -rf "$NEW"
-mkdir -p "$NEW"
+  closeSync(fd)
 
-tar -xzf "$ARCHIVE" -C "$NEW"
-rm -f "$ARCHIVE"
-
-rm -rf "$OLD"
-
-if [ -d "$LIVE" ]; then
-    mv "$LIVE" "$OLD"
-fi
-
-mv "$NEW" "$LIVE"
-
-rm -rf "$OLD"
-
-echo "Deployment completed."
-`
-
-  run('ssh', [
-    HOST,
-    remoteCommand,
-  ])
+  if (result.status !== 0) {
+    process.exit(result.status ?? 1)
+  }
 
   console.log('\n✓ botslate.com deployed successfully.')
 } finally {
