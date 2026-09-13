@@ -28,7 +28,7 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "deploy": "node scripts/deploy.mjs",
+    "deploy": "astro build && node scripts/deploy.mjs",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "astro": "astro"

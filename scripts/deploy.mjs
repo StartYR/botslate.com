@@ -61,7 +61,7 @@ try {
     process.exit(result.status ?? 1)
   }
 
-  console.log('\n✓ botslate.com deployed successfully.')
+  console.log('\n✅️ botslate.com 部署成功！\n')
 } finally {
   if (existsSync(archive)) {
     unlinkSync(archive)
