@@ -20,7 +20,7 @@ const authorCollection = defineCollection({
   schema: z.object({
     name: z.string(),
     role: z.string(),
-    avatar: z.string(),
+    avatar: z.string().optional(),
     bio: z.string(),
     twitter: z.string().optional(),
     github: z.string().optional(),

@@ -1,35 +1,68 @@
 ---
+import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Hero from '../components/Hero.astro';
 import Features from '../components/Features.astro';
-import Testimonials from '../components/Testimonials.astro';
-import Pricing from '../components/Pricing.astro';
-import FAQ from '../components/FAQ.astro';
+import Badge from '../components/Badge.astro';
 import { resolvePath } from '../utils/navigation';
+
+const notes = await getCollection('blog', ({ data }) => data.draft !== true);
+notes.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+
+const changes = await getCollection('changelog');
+changes.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
 ---
 
 <BaseLayout title="Home">
   <Hero />
   <Features />
-  <Testimonials />
-  <Pricing />
-  <FAQ />
-  
-  <!-- Final CTA Section before footer -->
-  <section class="py-32 bg-primary-600 dark:bg-primary-900 text-white text-center relative overflow-hidden">
+
+  <section class="py-28 md:py-32 bg-white dark:bg-[#09090b]">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between mb-12 reveal-on-scroll">
+        <div>
+          <p class="text-sm font-bold uppercase tracking-[0.2em] text-primary-600 dark:text-primary-400 mb-3">Latest notes</p>
+          <h2 class="text-4xl md:text-5xl font-heading font-extrabold text-slate-900 dark:text-white">From the workbench</h2>
+        </div>
+        <a href={resolvePath('/blog/')} class="text-sm font-bold text-primary-600 dark:text-primary-400 hover:text-primary-500 transition-colors">View all notes →</a>
+      </div>
+
+      <div class="grid gap-6 md:grid-cols-2">
+        {notes.slice(0, 2).map(note => (
+          <article class="glass-panel rounded-3xl p-8 hover-glow reveal-on-scroll">
+            <div class="flex flex-wrap items-center gap-3 text-sm text-slate-500 dark:text-slate-400 mb-5">
+              <time datetime={note.data.pubDate.toISOString()}>{note.data.pubDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</time>
+              {note.data.tags[0] && <Badge variant="neutral">{note.data.tags[0]}</Badge>}
+            </div>
+            <h3 class="text-2xl font-heading font-bold text-slate-900 dark:text-white mb-3"><a href={resolvePath(`/blog/${note.id}/`)} class="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">{note.data.title}</a></h3>
+            <p class="text-slate-600 dark:text-slate-400 leading-relaxed">{note.data.description}</p>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="py-24 bg-slate-50 dark:bg-[#0c0c0f] border-y border-slate-200 dark:border-slate-800">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl">
+      <div class="glass-panel rounded-3xl p-8 md:p-12 flex flex-col gap-8 md:flex-row md:items-center md:justify-between reveal-on-scroll">
+        <div>
+          <p class="text-sm font-bold uppercase tracking-[0.2em] text-accent-600 dark:text-accent-400 mb-3">Recent change</p>
+          <h2 class="text-3xl font-heading font-bold text-slate-900 dark:text-white mb-3">{changes[0]?.data.title ?? 'Built in public'}</h2>
+          <p class="text-slate-600 dark:text-slate-400">{changes[0] ? `Updated ${changes[0].data.date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}.` : 'Small releases, documented as they happen.'}</p>
+        </div>
+        <a href={resolvePath('/changelog/')} class="inline-flex shrink-0 items-center justify-center px-6 py-3 font-bold rounded-xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 hover:scale-105 transition-transform">View Changelog</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="py-28 bg-primary-600 dark:bg-primary-900 text-white text-center relative overflow-hidden">
     <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCI+CjxyZWN0IHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgZmlsbD0ibm9uZSI+PC9yZWN0Pgo8Y2lyY2xlIGN4PSIxIiBjeT0iMSIgcj0iMSIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjE1KSI+PC9jaXJjbGU+Cjwvc3ZnPg==')] opacity-50"></div>
     <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl relative z-10 reveal-on-scroll">
-      <h2 class="text-4xl md:text-6xl font-heading font-extrabold mb-6 tracking-tight">Deployment Test Successful 🚀</h2>
-      <p class="text-xl text-primary-100 dark:text-primary-200 mb-12">
-        Join hundreds of founders who are building faster with Zenix.
-      </p>
+      <h2 class="text-4xl md:text-6xl font-heading font-extrabold mb-6 tracking-tight">Built in public, one iteration at a time.</h2>
+      <p class="text-xl text-primary-100 dark:text-primary-200 mb-10">Small experiments, useful tools, and notes from the process.</p>
       <div class="flex flex-col sm:flex-row justify-center gap-4">
-        <a href={resolvePath('/pricing/')} class="inline-flex items-center justify-center px-8 py-4 text-lg font-bold rounded-xl bg-white text-primary-600 hover:bg-slate-50 hover:scale-105 transition-all shadow-2xl shadow-black/20">
-          Get Zenix Now
-        </a>
-        <a href="#features" class="inline-flex items-center justify-center px-8 py-4 text-lg font-bold rounded-xl border-2 border-primary-400 text-white hover:bg-primary-700 dark:hover:bg-primary-800 transition-colors">
-          Explore Features
-        </a>
+        <a href={resolvePath('/blog/')} class="inline-flex items-center justify-center px-8 py-4 text-lg font-bold rounded-xl bg-white text-primary-600 hover:bg-slate-50 hover:scale-105 transition-all shadow-2xl shadow-black/20">Read Notes</a>
+        <a href={resolvePath('/changelog/')} class="inline-flex items-center justify-center px-8 py-4 text-lg font-bold rounded-xl border-2 border-primary-400 text-white hover:bg-primary-700 dark:hover:bg-primary-800 transition-colors">View Changelog</a>
       </div>
     </div>
   </section>

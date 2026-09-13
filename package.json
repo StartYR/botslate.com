@@ -1,24 +1,24 @@
 {
-  "name": "zenix",
-  "description": "A high-performance Astro 6 SaaS theme by Farros FR. 100/100 Lighthouse optimized with dark mode, MDX blog, changelog, and search.",
+  "name": "botslate.com",
+  "description": "Independent software projects, experiments, tools, and technical notes.",
+  "private": true,
   "type": "module",
   "version": "0.0.1",
   "license": "MIT",
-  "homepage": "https://zenix.farrosfr.com/",
+  "homepage": "https://botslate.com/",
   "repository": {
     "type": "git",
-    "url": "https://github.com/farrosfr/zenix.git"
+    "url": "https://github.com/StartYR/botslate.com.git"
   },
   "bugs": {
-    "url": "https://github.com/farrosfr/zenix/issues"
+    "url": "https://github.com/StartYR/botslate.com/issues"
   },
   "keywords": [
     "astro",
-    "astro-theme",
+    "static-site",
     "tailwindcss",
-    "saas",
-    "landing-page",
-    "blog",
+    "software-experiments",
+    "technical-notes",
     "mdx"
   ],
   "engines": {

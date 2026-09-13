@@ -1,0 +1,28 @@
+---
+title: "Why this site is static"
+description: "How a static Astro build keeps Botslate simple to publish, fast to load, and easy to maintain."
+pubDate: 2026-09-13
+author: botslate
+tags: ["astro", "architecture", "web"]
+---
+
+# Simple by default
+
+Botslate does not need an application server to publish notes, describe experiments, or keep a changelog. A static build is a good fit for that job.
+
+Astro turns the site's pages and content collections into ready-to-serve files. The result has a small operational surface: publishing is predictable, pages are quick to deliver, and most content works without client-side JavaScript.
+
+## Where interaction still helps
+
+Static does not mean inert. The site keeps a few focused browser features:
+
+- a light and dark theme;
+- a responsive navigation menu;
+- a command palette for finding notes and updates;
+- page transitions and restrained reveal animations.
+
+Each enhancement is kept close to the interface that needs it. The content remains readable and navigable without turning the whole site into a client-rendered application.
+
+## A durable baseline
+
+The main benefit is not novelty. It is having a clear baseline that is easy to understand and maintain. More complex architecture can wait until a real requirement justifies it.

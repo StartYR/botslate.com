@@ -1,0 +1,31 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import BrandMark from '../components/BrandMark.astro';
+import { REPOSITORY_URL } from '../config';
+import { resolvePath } from '../utils/navigation';
+---
+
+<BaseLayout title="About" description="About Botslate, an independent space for software projects, experiments, tools, and technical notes.">
+  <section class="relative py-24 md:py-32 overflow-hidden">
+    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[360px] bg-primary-500/10 dark:bg-primary-500/5 rounded-full blur-[100px] pointer-events-none -z-10"></div>
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl">
+      <div class="flex items-center gap-3 mb-8 reveal-on-scroll"><BrandMark /><span class="text-sm font-bold uppercase tracking-[0.2em] text-primary-600 dark:text-primary-400">About Botslate</span></div>
+      <h1 class="text-5xl md:text-7xl font-heading font-extrabold text-slate-900 dark:text-white leading-tight tracking-tight mb-10 reveal-on-scroll">Build things. Learn from them. Keep what matters.</h1>
+      <div class="grid gap-8 md:grid-cols-[1.35fr_0.65fr] items-start reveal-on-scroll" style="transition-delay: 100ms;">
+        <div class="prose prose-lg prose-slate dark:prose-invert max-w-none">
+          <p>Botslate is a small independent space for software projects, experiments, useful tools, and technical notes.</p>
+          <p>The focus is simple: build things, learn from them, and document what is worth keeping.</p>
+          <p>Work is shared without invented scale or borrowed certainty. Projects can begin small, stay experimental, and still be useful.</p>
+        </div>
+        <aside class="glass-panel rounded-3xl p-6">
+          <p class="text-xs font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400 mb-4">Explore</p>
+          <div class="space-y-3">
+            <a href={resolvePath('/blog/')} class="flex items-center justify-between text-sm font-semibold text-slate-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Read the notes <span aria-hidden="true">→</span></a>
+            <a href={resolvePath('/changelog/')} class="flex items-center justify-between text-sm font-semibold text-slate-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors">View the changelog <span aria-hidden="true">→</span></a>
+            <a href={REPOSITORY_URL} target="_blank" rel="noopener noreferrer" class="flex items-center justify-between text-sm font-semibold text-slate-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Browse the repository <span aria-hidden="true">↗</span></a>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

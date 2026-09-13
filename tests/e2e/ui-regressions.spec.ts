@@ -1,225 +1,118 @@
 import { expect, test, type Page } from '@playwright/test';
 
 async function useTheme(page: Page, theme: 'light' | 'dark') {
-  await page.addInitScript((value) => localStorage.setItem('theme', value), theme);
+  await page.addInitScript((value) => {
+    if (!localStorage.getItem('theme')) localStorage.setItem('theme', value);
+  }, theme);
 }
 
-test.describe('theme and navigation regressions', () => {
-  test('theme toggle updates page, navbar, cards, and footer colors', async ({ page }) => {
+test.describe('theme and navigation', () => {
+  test('theme toggle updates the interface and persists across routes', async ({ page }) => {
     await useTheme(page, 'dark');
     await page.goto('/');
-
-    const body = page.locator('body');
-    const navbar = page.locator('header');
-    const featureCard = page.locator('#features .glass-panel').first();
-    const footer = page.locator('footer');
-
-    const darkBodyColor = await body.evaluate((el) => getComputedStyle(el).backgroundColor);
-    const darkFooterColor = await footer.evaluate((el) => getComputedStyle(el).backgroundColor);
+    await expect(page.locator('html')).toHaveClass(/dark/);
 
     await page.locator('[data-theme-toggle]:visible').first().click();
     await expect(page.locator('html')).not.toHaveClass(/dark/);
 
-    await expect
-      .poll(() => body.evaluate((el) => getComputedStyle(el).backgroundColor))
-      .not.toBe(darkBodyColor);
-    await expect
-      .poll(() => footer.evaluate((el) => getComputedStyle(el).backgroundColor))
-      .not.toBe(darkFooterColor);
-
-    await expect(navbar).toBeVisible();
-    await expect(featureCard).toBeVisible();
+    await page.goto('/about/');
+    await expect(page.locator('html')).not.toHaveClass(/dark/);
+    await expect(page.getByRole('heading', { name: /Build things/ })).toBeVisible();
   });
 
-  test('theme toggle remains clickable after scrolling', async ({ page }) => {
-    await useTheme(page, 'light');
-    await page.goto('/');
-    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight / 2));
-
-    const toggle = page.locator('[data-theme-toggle]:visible').first();
-    await expect(toggle).toBeVisible();
-    await toggle.click();
-    await expect(page.locator('html')).toHaveClass(/dark/);
-  });
-
-  test('theme stays dark on pricing route', async ({ page }) => {
-    await useTheme(page, 'dark');
-    await page.goto('/pricing/');
-    await expect(page.locator('html')).toHaveClass(/dark/);
-  });
-
-  test('pricing page section links target homepage anchors', async ({ page }) => {
-    await page.goto('/pricing/');
-
-    await expect(page.locator('header nav a', { hasText: 'Features' })).toHaveAttribute('href', '/#features');
-    await expect(page.locator('header nav a', { hasText: 'Testimonials' })).toHaveAttribute('href', '/#testimonials');
-    await expect(page.locator('header nav a', { hasText: 'Pricing' })).toHaveAttribute('href', '/pricing/');
-  });
-
-  test('navbar auth actions resolve to existing pages', async ({ page, isMobile }) => {
+  test('desktop navigation contains only the public site sections', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'Desktop navigation is hidden at the mobile breakpoint.');
     await page.goto('/');
 
-    if (isMobile) {
-      await page.getByRole('button', { name: 'Open main menu' }).click();
-    }
+    const nav = page.getByRole('navigation', { name: 'Main navigation' });
+    await expect(nav.getByRole('link')).toHaveText(['Home', 'Notes', 'Changelog', 'About']);
+    await expect(page.getByRole('link', { name: 'View Botslate repository on GitHub' })).toHaveAttribute('href', 'https://github.com/StartYR/botslate.com');
+  });
 
-    await expect(page.getByRole('link', { name: 'Sign in' }).filter({ visible: true }).first()).toHaveAttribute('href', '/login/');
-    await expect(page.getByRole('link', { name: 'Get Started' }).filter({ visible: true }).first()).toHaveAttribute('href', '/signup/');
+  test('mobile navigation opens and exposes the same sections', async ({ page, isMobile }) => {
+    test.skip(!isMobile, 'Mobile navigation is hidden above the mobile breakpoint.');
+    await page.goto('/');
 
-    const login = await page.goto('/login/');
-    expect(login?.status()).toBeLessThan(400);
-    await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible();
-    await expect(page.getByText('Demo only. This form does not create a session or send credentials.')).toBeVisible();
-    await expect(page.getByRole('link', { name: 'View GitHub Repo' }).first()).toHaveAttribute('href', 'https://github.com/farrosfr/zenix');
-
-    const signup = await page.goto('/signup/');
-    expect(signup?.status()).toBeLessThan(400);
-    await expect(page.getByRole('heading', { name: 'Create account' })).toBeVisible();
-    await expect(page.getByText('Demo only. Use this as a UI starting point for Supabase, Clerk, Auth.js, or your own backend.')).toBeVisible();
-    await expect(page.getByRole('link', { name: 'View GitHub Repo' }).first()).toHaveAttribute('href', 'https://github.com/farrosfr/zenix');
+    const button = page.getByRole('button', { name: 'Open main menu' });
+    await button.click();
+    await expect(button).toHaveAttribute('aria-expanded', 'true');
+    await expect(page.getByRole('navigation', { name: 'Mobile navigation' }).getByRole('link')).toHaveText(['Home', 'Notes', 'Changelog', 'About']);
   });
 });
 
-test.describe('search modal regressions', () => {
-  test('search results stay sharp and readable over blurred backdrop', async ({ page }) => {
+test.describe('content and removed template routes', () => {
+  test('core public pages render', async ({ page }) => {
     await page.goto('/');
-    await page.locator('button[onclick="window.toggleCommandPalette()"]:visible').first().click();
-    await page.locator('#search-input').fill('zenix');
+    await expect(page.getByRole('heading', { name: 'Ideas, tools, and experiments.' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /A place to make/ })).toBeVisible();
 
-    const palette = page.locator('#command-palette > div').nth(1);
-    const backdrop = page.locator('[data-command-backdrop]');
-    const result = page.locator('#search-results li').first();
-
-    await expect(result).toBeVisible();
-    await expect(result).toContainText(/Zenix/i);
-    await expect(backdrop).toHaveCSS('backdrop-filter', /blur/);
-    await expect(palette).toHaveCSS('filter', 'none');
-  });
-});
-
-test.describe('blog regressions', () => {
-  test('blog detail renders author once with fallback avatar and balanced callouts', async ({ page }) => {
-    await page.goto('/blog/introducing-zenix/');
-
-    const authorName = page.getByText('Mochammad Farros F. R.');
-    await expect(authorName).toHaveCount(2);
-
-    const headerAuthor = page.locator('article').getByRole('link', { name: /Mochammad Farros F\. R\./ });
-    await expect(headerAuthor).toBeVisible();
-    await expect(headerAuthor).toContainText('MF');
-
-    const authorCard = page.locator('text=About Author').locator('..');
-    await expect(authorCard).toContainText('MF');
-    await expect(authorCard).toContainText('Founder & Lead Developer');
-
-    const callout = page.getByText('The Zenix Philosophy').locator('..').locator('..');
-    const content = page.locator('.prose').first();
-    const calloutBox = await callout.boundingBox();
-    const contentBox = await content.boundingBox();
-    expect(calloutBox).not.toBeNull();
-    expect(contentBox).not.toBeNull();
-    expect(calloutBox!.x).toBeGreaterThanOrEqual(contentBox!.x - 1);
-    expect(calloutBox!.x + calloutBox!.width).toBeLessThanOrEqual(contentBox!.x + contentBox!.width + 1);
-  });
-
-  test('blog listing author metadata does not render broken image alt text', async ({ page }) => {
     await page.goto('/blog/');
+    await expect(page.getByRole('heading', { name: 'Notes', exact: true })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Welcome to Botslate' })).toBeVisible();
 
-    const cardMeta = page.locator('article').first().locator('div').first();
-    await expect(cardMeta).toContainText('Mochammad Farros F. R.');
-    await expect(cardMeta).toContainText('MF');
-  });
-});
-
-test.describe('seo regressions', () => {
-  test('homepage exposes canonical, robots, open graph, and twitter metadata', async ({ page }) => {
-    await page.goto('/');
-
-    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://zenix.farrosfr.com/');
-    await expect(page.locator('link[rel="sitemap"]')).toHaveAttribute('href', '/sitemap.xml');
-    await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'index, follow');
-    await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', 'Home | Zenix');
-    await expect(page.locator('meta[property="og:type"]')).toHaveAttribute('content', 'website');
-    await expect(page.locator('meta[property="og:url"]')).toHaveAttribute('content', 'https://zenix.farrosfr.com/');
-    await expect(page.locator('meta[property="og:image"]')).toHaveAttribute('content', 'https://zenix.farrosfr.com/og-image.png');
-    await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary_large_image');
-    await expect(page.locator('meta[name="twitter:site"]')).toHaveAttribute('content', '@farrosfr_');
-    await expect(page.locator('meta[name="twitter:image"]')).toHaveAttribute('content', 'https://zenix.farrosfr.com/og-image.png');
+    await page.goto('/changelog/');
+    await expect(page.getByRole('heading', { name: 'Initial Launch' })).toBeVisible();
   });
 
-  test('article pages expose article dates and BlogPosting structured data', async ({ page }) => {
-    await page.goto('/blog/introducing-zenix/');
+  test('removed demo routes return not found', async ({ request }) => {
+    for (const path of ['/login/', '/signup/', '/pricing/', '/privacy/', '/terms/']) {
+      const response = await request.get(path);
+      expect(response.status(), path).toBe(404);
+    }
+  });
 
-    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://zenix.farrosfr.com/blog/introducing-zenix/');
-    await expect(page.locator('meta[property="og:type"]')).toHaveAttribute('content', 'article');
-    await expect(page.locator('meta[property="article:published_time"]')).toHaveAttribute('content', '2026-05-18T00:00:00.000Z');
-    await expect(page.locator('meta[property="article:modified_time"]')).toHaveAttribute('content', '2026-05-18T00:00:00.000Z');
+  test('note detail carries Botslate metadata without template author links', async ({ page }) => {
+    await page.goto('/blog/welcome-to-botslate/');
+
+    await expect(page.getByRole('heading', { name: 'Welcome to Botslate' })).toBeVisible();
+    await expect(page.locator('article').getByText('Botslate', { exact: true }).first()).toBeVisible();
+    await expect(page.locator('article a[href*="farros"]')).toHaveCount(0);
 
     const structuredData = await page.locator('script[type="application/ld+json"]').textContent();
     expect(structuredData).toContain('"@type":"BlogPosting"');
-    expect(structuredData).toContain('"datePublished":"2026-05-18T00:00:00.000Z"');
-    expect(structuredData).toContain('"dateModified":"2026-05-18T00:00:00.000Z"');
-    expect(structuredData).toContain('"name":"Mochammad Farros F. R."');
-  });
-
-  test('sitemap and robots are crawlable', async ({ page }) => {
-    const sitemap = await page.goto('/sitemap.xml');
-    expect(sitemap?.ok()).toBe(true);
-    await expect(page.locator('body')).toContainText('https://zenix.farrosfr.com/');
-    await expect(page.locator('body')).toContainText('https://zenix.farrosfr.com/blog/introducing-zenix/');
-
-    const robots = await page.goto('/robots.txt');
-    expect(robots?.ok()).toBe(true);
-    await expect(page.locator('body')).toContainText('User-agent: *');
-    await expect(page.locator('body')).toContainText('Allow: /');
-    await expect(page.locator('body')).toContainText('Sitemap: https://zenix.farrosfr.com/sitemap.xml');
+    expect(structuredData).toContain('"name":"Botslate"');
   });
 });
 
-test.describe('layout regressions', () => {
-  test('footer newsletter form does not overlap footer columns', async ({ page, isMobile }) => {
+test.describe('search and SEO', () => {
+  test('command palette finds Botslate pages and notes', async ({ page }) => {
     await page.goto('/');
+    await page.locator('button[onclick="window.toggleCommandPalette()"]:visible').first().click();
+    await page.locator('#search-input').fill('Botslate');
 
-    const input = page.locator('footer input[type="email"]');
-    const button = page.locator('footer button[type="submit"]');
-    const productHeading = page.locator('footer h3', { hasText: 'Product' });
-
-    await expect(input).toBeVisible();
-    await expect(button).toBeVisible();
-    await expect(productHeading).toBeVisible();
-
-    const inputBox = await input.boundingBox();
-    const buttonBox = await button.boundingBox();
-    const productBox = await productHeading.boundingBox();
-    expect(inputBox).not.toBeNull();
-    expect(buttonBox).not.toBeNull();
-    expect(productBox).not.toBeNull();
-
-    if (isMobile) {
-      const formBottom = Math.max(inputBox!.y + inputBox!.height, buttonBox!.y + buttonBox!.height);
-      expect(formBottom).toBeLessThan(productBox!.y);
-    } else {
-      const formRight = Math.max(inputBox!.x + inputBox!.width, buttonBox!.x + buttonBox!.width);
-      expect(formRight).toBeLessThan(productBox!.x);
-    }
+    const results = page.locator('#search-results');
+    await expect(results).toContainText('About Botslate');
+    await expect(results).toContainText('Welcome to Botslate');
+    await expect(results).not.toContainText(/pricing|sign in|sign up/i);
   });
 
-  test('feature cards do not clip their text in light mode', async ({ page, isMobile }) => {
-    test.skip(isMobile, 'Feature clipping check targets tablet/desktop grid behavior.');
-
-    await useTheme(page, 'light');
+  test('homepage exposes Botslate canonical and social metadata', async ({ page }) => {
     await page.goto('/');
 
-    for (const card of await page.locator('#features .glass-panel').all()) {
-      const clipped = await card.evaluate((el) => el.scrollHeight > el.clientHeight + 1);
-      expect(clipped).toBe(false);
-    }
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://botslate.com/');
+    await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', 'Home | Botslate');
+    await expect(page.locator('meta[property="og:url"]')).toHaveAttribute('content', 'https://botslate.com/');
+    await expect(page.locator('meta[property="og:image"]')).toHaveAttribute('content', 'https://botslate.com/og-image.png');
+    await expect(page.locator('meta[name="twitter:site"]')).toHaveCount(0);
+    await expect(page.locator('meta[name="twitter:image"]')).toHaveAttribute('content', 'https://botslate.com/og-image.png');
   });
 
-  test('homepage feature cards do not overlap at iPad width', async ({ page, isMobile }) => {
-    test.skip(isMobile, 'iPad layout check targets tablet/desktop grid behavior.');
+  test('sitemap and search index exclude removed routes', async ({ request }) => {
+    const sitemap = await (await request.get('/sitemap.xml')).text();
+    expect(sitemap).toContain('https://botslate.com/about/');
+    expect(sitemap).toContain('https://botslate.com/blog/welcome-to-botslate/');
+    expect(sitemap).not.toMatch(/login|signup|pricing|privacy|terms/);
 
-    await useTheme(page, 'light');
+    const searchIndex = await (await request.get('/search-index.json')).text();
+    expect(searchIndex).toContain('About Botslate');
+    expect(searchIndex).toContain('Welcome to Botslate');
+    expect(searchIndex).not.toMatch(/login|signup|pricing/i);
+  });
+});
+
+test.describe('responsive layout', () => {
+  test('feature cards do not overlap at tablet and desktop widths', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'Card overlap check targets tablet and desktop grids.');
     await page.goto('/');
 
     const cards = await page.locator('#features .glass-panel').all();
@@ -239,5 +132,13 @@ test.describe('layout regressions', () => {
         expect(overlapX * overlapY).toBe(0);
       }
     }
+  });
+
+  test('footer contains real navigation and no subscription form', async ({ page }) => {
+    await page.goto('/');
+    const footer = page.locator('footer');
+    await expect(footer.getByText('Built with Astro.')).toBeVisible();
+    await expect(footer.locator('form')).toHaveCount(0);
+    await expect(footer.locator('a[href="#"]')).toHaveCount(0);
   });
 });

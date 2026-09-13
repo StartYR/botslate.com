@@ -1,134 +1,44 @@
-# Zenix
+# Botslate
 
-Zenix is a polished Astro SaaS theme by [Farros FR](https://farrosfr.com) with responsive landing sections, pricing, blog, changelog, dark mode, search, and MDX content support.
+Botslate is an independent space for software projects, experiments, useful tools, and technical notes.
 
-[Live demo](https://zenix.farrosfr.com/) · [Repository](https://github.com/farrosfr/zenix)
+The public site is built with Astro, Tailwind CSS, and MDX. It uses static output, responsive layouts, light and dark themes, a command palette, Notes, and a public changelog.
 
-![alt text](readme-hero.png)
-![alt text](readme-speed.png)
-![alt text](readme-speed-mobile.png)
+## Local development
 
-## Features
-
-- Astro 6 with static output
-- Tailwind CSS 4 styling
-- Responsive SaaS landing page sections
-- Pricing, FAQ, testimonials, blog, and changelog pages
-- MDX content with reusable callout components
-- Dark and light mode with persisted user preference
-- Command palette search
-- Astro view transitions
-- Playwright UI regression tests
-
-## Quick Start
-
-Create a new Astro project from the GitHub template:
+Requirements: Node.js 22.12 or newer and npm.
 
 ```bash
-npm create astro@latest -- --template farrosfr/zenix
-```
-
-Or clone the repository directly:
-
-```bash
-git clone https://github.com/farrosfr/zenix.git my-saas-site
-cd my-saas-site
 npm install
 npm run dev
 ```
 
-Open `http://localhost:4321/` in your browser.
+The local development server is available at `http://localhost:4321` by default.
 
-## Commands
+## Validation
+
+Create the production output in `dist/`:
 
 ```bash
-npm run dev       # Start the local dev server
-npm run build     # Build the production site
-npm run preview   # Preview the production build
-npm run test:e2e  # Run Playwright regression tests
+npm run build
 ```
 
-## Configuration
+Run the Playwright interface checks:
 
-Most site-level settings live in `src/config.ts`:
-
-```ts
-export const SITE_TITLE = 'Zenix';
-export const SITE_DESCRIPTION = 'High-converting, performance-focused Astro theme for Micro-SaaS products.';
-export const SITE_URL = 'https://zenix.farrosfr.com';
-
-export const SOCIAL_LINKS = {
-  twitter: 'https://twitter.com/farrosfr_',
-  github: 'https://github.com/farrosfr',
-  linkedin: 'https://linkedin.com/in/yourhandle',
-};
+```bash
+npm run test:e2e
 ```
-
-Update these values before publishing your own site.
 
 ## Content
 
-Blog posts and changelog entries are powered by Astro content collections.
-
-- Blog posts: `src/content/blog/`
-- Changelog entries: `src/content/changelog/`
-- Authors: `src/content/authors/`
-
-Example blog post:
-
-```mdx
----
-title: "My First Post"
-description: "A short summary."
-pubDate: 2026-06-01
-author: farros
-tags: ["update", "feature"]
----
-
-# Hello World
-
-<Callout type="success" title="Ready">
-  MDX components can be used directly inside content.
-</Callout>
-```
+- Notes live in `src/content/blog/` and remain available under `/blog/`.
+- Changelog entries live in `src/content/changelog/`.
+- Shared site metadata and navigation live in `src/config.ts`.
 
 ## Deployment
 
-Zenix builds to a static site and can be deployed to Vercel, Netlify, Cloudflare Pages, GitHub Pages, or any static hosting provider.
-
-For production, update `site` in `astro.config.mjs` to match your domain.
-
-### Cloudflare Pages
-
-When importing this GitHub repository into Cloudflare Pages, use:
-
-```text
-Framework preset: Astro
-Build command: npm run build
-Build output directory: dist
-Root directory: /
-Node.js version: 22.12.0 or newer
-```
-
-The repository includes `wrangler.toml` with `pages_build_output_dir = "dist"` for Cloudflare Pages compatibility.
-
-## Theme Submission Notes
-
-This repository is public, uses public npm dependencies, and includes setup documentation for new users. Preview images for the Astro theme directory should be 16:9, at least 1280px wide, and less than 5MB combined.
-
-## Contributing and Collaboration
-
-We welcome contributions and collaboration! Whether you want to fix a bug, add a new feature, or improve documentation, your help is greatly appreciated. 
-
-To contribute:
-1. Fork the repository.
-2. Create a new branch (`git checkout -b feature/amazing-feature`).
-3. Commit your changes (`git commit -m 'feat: add amazing feature'`).
-4. Push to the branch (`git push origin feature/amazing-feature`).
-5. Open a Pull Request.
-
-If you have an idea for a major change or a new feature, please open an issue first to discuss it with the maintainers. We are also open to collaborations on expanding Zenix for different use cases! Let's build something awesome together.
+The repository includes an existing deployment workflow exposed through `npm run deploy`. Deployment is intentionally separate from local build verification.
 
 ## License
 
-MIT
+This project retains the repository's MIT License and required upstream copyright notice. See [LICENSE](LICENSE).

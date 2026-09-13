@@ -9,13 +9,9 @@ type SitemapEntry = {
 
 const staticEntries: SitemapEntry[] = [
   { path: '/' },
-  { path: '/login/' },
-  { path: '/signup/' },
-  { path: '/pricing/' },
   { path: '/blog/' },
   { path: '/changelog/' },
-  { path: '/privacy/' },
-  { path: '/terms/' },
+  { path: '/about/' },
 ];
 
 const escapeXml = (value: string) =>
